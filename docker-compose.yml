@@ -1,0 +1,224 @@
+# ============================================================
+# IncidentGuard — docker-compose.yml
+# Ambiente de desenvolvimento local completo.
+#
+# Serviços:
+#   - postgres      → banco de dados
+#   - backend       → API FastAPI
+#   - frontend      → dashboard React
+#   - prometheus    → coleta de métricas
+#   - alertmanager  → disparo de alertas → API
+#   - grafana       → visualização
+#   - loki          → agregação de logs
+#
+# Uso:
+#   cp .env.example .env        # configure as variáveis
+#   docker compose up -d        # sobe todos os serviços
+#   docker compose logs -f      # acompanha os logs
+#   docker compose down -v      # remove containers e volumes
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # Banco de dados
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: incidentguard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ----------------------------------------------------------
+  # API Backend (FastAPI)
+  # ----------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: incidentguard-backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES}
+      ALERTMANAGER_API_KEY: ${ALERTMANAGER_API_KEY}
+      SECURITY_SCANNER_API_KEY: ${SECURITY_SCANNER_API_KEY}
+      FALCO_API_KEY: ${FALCO_API_KEY}
+      API_ENV: ${API_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "8000:8000"
+    networks:
+      - backend-net
+      - frontend-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+        "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    # Desenvolvimento: monta o código local para hot reload
+    volumes:
+      - ./backend/app:/app/app:ro
+
+  # ----------------------------------------------------------
+  # Frontend (React + nginx)
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: incidentguard-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - frontend-net
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ----------------------------------------------------------
+  # Prometheus — coleta de métricas
+  # ----------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: incidentguard-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    volumes:
+      - ./k8s/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./k8s/monitoring/prometheus/rules.yml:/etc/prometheus/rules.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - backend-net
+      - monitoring-net
+    depends_on:
+      - backend
+
+  # ----------------------------------------------------------
+  # Alertmanager — dispara webhooks para a API
+  # ----------------------------------------------------------
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: incidentguard-alertmanager
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    volumes:
+      - ./k8s/monitoring/prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "9093:9093"
+    networks:
+      - backend-net
+      - monitoring-net
+    depends_on:
+      - backend
+
+  # ----------------------------------------------------------
+  # Grafana — dashboards e visualização
+  # ----------------------------------------------------------
+  grafana:
+    image: grafana/grafana:10.4.3
+    container_name: incidentguard-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${POSTGRES_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_HTTP_PORT: "3001"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./k8s/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./k8s/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3001:3001"
+    networks:
+      - monitoring-net
+    depends_on:
+      - prometheus
+      - loki
+
+  # ----------------------------------------------------------
+  # Loki — agregação de logs
+  # ----------------------------------------------------------
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: incidentguard-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki.yml
+    volumes:
+      - ./k8s/monitoring/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    networks:
+      - monitoring-net
+
+# ----------------------------------------------------------
+# Redes — isolamento por responsabilidade
+# ----------------------------------------------------------
+networks:
+  backend-net:
+    driver: bridge
+    name: incidentguard-backend
+  frontend-net:
+    driver: bridge
+    name: incidentguard-frontend
+  monitoring-net:
+    driver: bridge
+    name: incidentguard-monitoring
+
+# ----------------------------------------------------------
+# Volumes — persistência de dados
+# ----------------------------------------------------------
+volumes:
+  postgres_data:
+    name: incidentguard-postgres
+  prometheus_data:
+    name: incidentguard-prometheus
+  alertmanager_data:
+    name: incidentguard-alertmanager
+  grafana_data:
+    name: incidentguard-grafana
+  loki_data:
+    name: incidentguard-loki

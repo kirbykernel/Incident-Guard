@@ -1,0 +1,30 @@
+groups:
+  - name: incidentguard.rules
+    rules:
+
+      - alert: APIHighLatency
+        expr: http_request_duration_seconds_p99 > 2
+        for: 5m
+        labels:
+          severity: high
+        annotations:
+          summary: "Latência da API acima de 2s"
+          description: "O percentil 99 de latência está em {{ $value }}s"
+
+      - alert: APIDown
+        expr: up{job="incidentguard-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API IncidentGuard fora do ar"
+          description: "O serviço backend não está respondendo há mais de 1 minuto"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: high
+        annotations:
+          summary: "Taxa de erros 5xx acima de 5%"
+          description: "Taxa atual: {{ $value | humanizePercentage }}"

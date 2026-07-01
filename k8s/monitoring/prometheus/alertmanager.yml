@@ -1,0 +1,20 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ["alertname", "severity"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: "incidentguard-api"
+
+receivers:
+  - name: "incidentguard-api"
+    webhook_configs:
+      - url: "http://backend:8000/webhooks/alertmanager"
+        http_config:
+          authorization:
+            type: "ApiKey"
+            credentials_file: "/etc/alertmanager/api_key"
+        send_resolved: true
+        max_alerts: 10
