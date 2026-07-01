@@ -5,7 +5,7 @@
 # ============================================================
 
 # ---- Stage 1: builder ----
-FROM node:20-alpine AS builder
+FROM node:20-alpine@sha256:afdf98210b07b586eb71fa22ba2e432e058e4cd1304d31ed60888755b8c865fb AS builder
 
 WORKDIR /build
 
@@ -19,7 +19,7 @@ RUN npm run build
 
 
 # ---- Stage 2: runtime ----
-FROM nginx:1.26-alpine AS runtime
+FROM nginx:1.26-alpine@sha256:b17b00f7ef0038aeb11362157f49006a130628ee711cefcced871405d046f114 AS runtime
 
 LABEL org.opencontainers.image.title="IncidentGuard Frontend"
 LABEL org.opencontainers.image.description="Dashboard React do IncidentGuard"

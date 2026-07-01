@@ -6,7 +6,7 @@
 # ============================================================
 
 # ---- Stage 1: builder ----
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim@sha256:86d3e4424d5e963e60594a3a6b4d597cc4d41f5152fe67a97a40dca9ea092475 AS builder
 
 WORKDIR /build
 
@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
 # ---- Stage 2: runtime ----
-FROM python:3.12-slim AS runtime
+FROM python:3.12-slim@sha256:86d3e4424d5e963e60594a3a6b4d597cc4d41f5152fe67a97a40dca9ea092475 AS runtime
 
 # Metadados da imagem
 LABEL org.opencontainers.image.title="IncidentGuard API"

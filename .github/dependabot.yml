@@ -1,0 +1,68 @@
+# ============================================================
+# IncidentGuard — Dependabot
+# Monitora automaticamente atualizações de:
+#   - Imagens Docker (Dockerfiles)
+#   - Dependências Python (requirements.txt)
+#   - Dependências Node (package.json)
+#   - Actions do GitHub CI/CD
+# ============================================================
+version: 2
+updates:
+
+  # Imagens Docker — backend e frontend
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+
+  - package-ecosystem: "docker"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"
+
+  # Dependências Python
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "python"
+      - "security"
+
+  # Dependências Node / React
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "security"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "ci-cd"
