@@ -8,13 +8,23 @@ IncidentGuard is a cloud-native incident monitoring platform: it ingests alerts 
 security scanners (Trivy, Gitleaks, OPA/Gatekeeper), and Falco (runtime security), normalizes them into
 `Incident` records, and exposes them through an API and (planned) React dashboard.
 
-**Project state**: the backend API is implemented; the frontend is scaffolded only (Dockerfile + nginx config
-+ empty `src/{components,hooks,pages,services}` dirs, no `package.json` yet); `k8s/backend`, `k8s/frontend`,
-`k8s/postgres`, `k8s/security/{falco,opa}`, `infra/terraform`, `docs/uml`, and `.github/workflows` exist as
-empty directories reserved for future work. There are no tests beyond an empty `backend/tests/__init__.py`,
-no lint/format config, and no Alembic migrations set up yet (despite `alembic` being in requirements.txt and
-referenced in comments — the app currently creates tables via `Base.metadata.create_all` on startup, see
-`backend/app/main.py`'s `lifespan`).
+**Purpose**: this is a portfolio project for a DevSecOps job application. The application layer is
+intentionally simple — it exists to showcase security-focused DevOps practices (SAST/DAST, container/IaC
+scanning, secrets management, policy-as-code, Kubernetes hardening) end-to-end, not to be a fully-featured
+product. When in doubt about scope, favor depth on the security/infra layer over expanding app features.
+Runs on local minikube; no cloud spend expected.
+
+**Project state**: the backend API is implemented; UML/design docs (class diagram, sequence diagrams for
+login and webhook flows, DFD, STRIDE threat model, attack surface map) are written as Mermaid under
+`docs/uml/` — treat these as the source of truth for intended data flows and threat coverage, and keep them
+in sync with security-relevant changes. The frontend is scaffolded only (Dockerfile + nginx config + empty
+`src/{components,hooks,pages,services}` dirs, no `package.json` yet) — **`docker compose up` currently fails
+building the frontend service** because there's no actual Vite project. `k8s/backend`, `k8s/frontend`,
+`k8s/postgres`, `k8s/security/{falco,opa}`, and `infra/terraform` are still empty, reserved for the
+Kubernetes-hardening and IaC work that's the main planned deliverable. There are no tests beyond an empty
+`backend/tests/__init__.py`, no lint/format config, and no Alembic migrations set up yet (despite `alembic`
+being in requirements.txt and referenced in comments — the app currently creates tables via
+`Base.metadata.create_all` on startup, see `backend/app/main.py`'s `lifespan`).
 
 Code comments and docstrings throughout the backend are written in Portuguese; match that convention when
 editing existing files.
@@ -69,10 +79,10 @@ adding frontend code.
   - **Machine webhook senders**: `X-API-Key` header checked per-source (`alertmanager`, `security_scanner`,
     `falco`) against settings-configured keys — see `verify_api_key` and each webhook route's
     `_validate_api_key` check.
-- `models/models.py` — SQLAlchemy ORM models mirroring a UML class diagram (intended to live under
-  `docs/uml/`, currently empty): `User`, `Incident`, `APIKey`, `WebhookEvent`, plus `Role`/`Severity`/
-  `Status`/`Source` enums. `Incident.source` records provenance; `WebhookEvent` stores the raw payload and
-  links back to the `Incident` it produced (nullable — not every webhook creates one).
+- `models/models.py` — SQLAlchemy ORM models mirroring `docs/uml/class-diagram.md`: `User`, `Incident`,
+  `APIKey`, `WebhookEvent`, plus `Role`/`Severity`/`Status`/`Source` enums. `Incident.source` records
+  provenance; `WebhookEvent` stores the raw payload and links back to the `Incident` it produced (nullable —
+  not every webhook creates one).
 - `schemas/schemas.py` — Pydantic v2 request/response contracts, intentionally decoupled from the ORM models
   (never return a SQLAlchemy model directly from a route).
 - `routes/auth.py`, `routes/incidents.py`, `routes/webhooks.py` — one router per domain, each mounted under
