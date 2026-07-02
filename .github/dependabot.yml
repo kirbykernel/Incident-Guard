@@ -66,3 +66,15 @@ updates:
     labels:
       - "dependencies"
       - "ci-cd"
+
+# Imagens do docker-compose
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "security"

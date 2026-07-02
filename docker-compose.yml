@@ -24,7 +24,7 @@ services:
   # Banco de dados
   # ----------------------------------------------------------
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16-alpine@sha256:0fc5c901ec0a3c55ce70b99b040daeb89d5b35b61febbced1b4b24dbc3153ec8
     container_name: incidentguard-postgres
     restart: unless-stopped
     environment:
@@ -112,7 +112,7 @@ services:
   # Prometheus — coleta de métricas
   # ----------------------------------------------------------
   prometheus:
-    image: prom/prometheus:v2.52.0
+    image: prom/prometheus:v2.52.0@sha256:60f8194a41d3229b9e70684965ebdaa8f5a265f042d9de3d2079ba2ce677ec78
     container_name: incidentguard-prometheus
     restart: unless-stopped
     command:
@@ -136,7 +136,7 @@ services:
   # Alertmanager — dispara webhooks para a API
   # ----------------------------------------------------------
   alertmanager:
-    image: prom/alertmanager:v0.27.0
+    image: prom/alertmanager:v0.27.0@sha256:45c3a586d4332d710bef92b06e90380c0b1f588968c00100d4b5e4e44c40ca5f
     container_name: incidentguard-alertmanager
     restart: unless-stopped
     command:
@@ -157,7 +157,7 @@ services:
   # Grafana — dashboards e visualização
   # ----------------------------------------------------------
   grafana:
-    image: grafana/grafana:10.4.3
+    image: grafana/grafana:10.4.3@sha256:e0eeee7b65bf29fd1414443632aea171d718df2641520550e83d7b7ddc6ca362
     container_name: incidentguard-grafana
     restart: unless-stopped
     environment:
@@ -182,7 +182,7 @@ services:
   # Loki — agregação de logs
   # ----------------------------------------------------------
   loki:
-    image: grafana/loki:3.0.0
+    image: grafana/loki:3.0.0@sha256:451563d761403fd66fdf7abef934f8712e864d47ef88f7b64e8ca52852fdaf28
     container_name: incidentguard-loki
     restart: unless-stopped
     command: -config.file=/etc/loki/loki.yml
