@@ -1,5 +1,4 @@
 # Threat model — STRIDE
-```mermaid
 | Componente | Categoria | Ameaça |
 |---|---|---|
 | POST /auth/login | S — Spoofing | Brute force de credenciais |
@@ -34,4 +33,3 @@
 | Kubernetes cluster | I — Information Disclosure | Secrets nao criptografados no etcd |
 | Kubernetes cluster | D — Denial of Service | Pod sem resource limits (CPU/memory) |
 | Kubernetes cluster | E — Elevation of Privilege | ServiceAccount com permissoes excessivas |
-```
