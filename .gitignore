@@ -10,6 +10,8 @@ dist/
 .pytest_cache/
 .coverage
 htmlcov/
+#claude
+CLAUDE.md
 
 # Node / React
 node_modules/
