@@ -1,3 +1,4 @@
+```mermaid
 classDiagram
   direction TB
   class User {
@@ -80,3 +81,4 @@ classDiagram
   Incident ..> Severity : has
   Incident ..> Status : has
   Incident ..> Source : has
+```
