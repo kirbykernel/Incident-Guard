@@ -1,3 +1,4 @@
+```mermaid
 sequenceDiagram
   actor U as Usuario
   participant FE as Frontend React
@@ -20,3 +21,4 @@ sequenceDiagram
   API->>DB: SELECT incidents
   DB-->>API: lista de incidentes
   API-->>FE: incidents[]
+```

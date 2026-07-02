@@ -1,3 +1,4 @@
+```mermaid
 sequenceDiagram
   participant SRC as Fonte Alertmanager
   participant API as API FastAPI
@@ -21,3 +22,4 @@ sequenceDiagram
     FE->>API: GET /incidents
     API-->>FE: lista com novo incidente
   end
+```
