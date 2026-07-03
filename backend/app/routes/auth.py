@@ -1,17 +1,25 @@
 # ============================================================
 # IncidentGuard — rotas de autenticação
-# POST /auth/login  → retorna JWT
+# POST /auth/login  → autentica e define cookies de sessão (JWT + CSRF)
+# POST /auth/logout → limpa os cookies de sessão
 # POST /auth/signup → cria usuário (apenas admin em produção)
 # GET  /auth/me     → retorna usuário autenticado
+#
+# Sessão via cookie httpOnly, não Authorization header: o JWT nunca fica
+# acessível a JavaScript no navegador (ver core/security.py e
+# docs/uml/threat-model-stride.md).
 # ============================================================
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import (
+    ACCESS_TOKEN_COOKIE,
+    CSRF_TOKEN_COOKIE,
     create_access_token,
+    generate_csrf_token,
     get_current_user_id,
     hash_password,
     verify_password,
@@ -20,7 +28,6 @@ from app.core.settings import get_settings
 from app.models.models import User
 from app.schemas.schemas import (
     LoginRequest,
-    TokenResponse,
     UserCreate,
     UserResponse,
 )
@@ -29,11 +36,43 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 settings = get_settings()
 
 
-@router.post("/login", response_model=TokenResponse)
-async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
+def _set_session_cookies(response: Response, user: User) -> None:
+    token = create_access_token(
+        subject=str(user.id),
+        extra={"role": user.role.value, "email": user.email},
+    )
+    csrf_token = generate_csrf_token()
+    max_age = settings.JWT_EXPIRE_MINUTES * 60
+
+    response.set_cookie(
+        ACCESS_TOKEN_COOKIE,
+        token,
+        max_age=max_age,
+        path="/",
+        httponly=True,
+        secure=settings.is_production,
+        samesite="lax",
+    )
+    # Não httpOnly de propósito: o frontend precisa ler esse valor para
+    # ecoá-lo no header X-CSRF-Token (double-submit) — ver core/security.py.
+    response.set_cookie(
+        CSRF_TOKEN_COOKIE,
+        csrf_token,
+        max_age=max_age,
+        path="/",
+        httponly=False,
+        secure=settings.is_production,
+        samesite="lax",
+    )
+
+
+@router.post("/login", response_model=UserResponse)
+async def login(body: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
     """
     Autentica usuário com email e senha.
-    Retorna JWT com expiração configurável via JWT_EXPIRE_MINUTES.
+    Define cookies de sessão (JWT httpOnly + CSRF token); o corpo da
+    resposta nunca carrega o token — se carregasse, um XSS interceptando
+    a resposta do fetch teria o mesmo acesso que teria via localStorage.
     """
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
@@ -51,15 +90,19 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail="Conta desativada",
         )
 
-    token = create_access_token(
-        subject=str(user.id),
-        extra={"role": user.role.value, "email": user.email},
-    )
+    _set_session_cookies(response, user)
+    return user
 
-    return TokenResponse(
-        access_token=token,
-        expires_in=settings.JWT_EXPIRE_MINUTES * 60,
-    )
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(response: Response):
+    """
+    Encerra a sessão. Um cookie httpOnly só pode ser removido pelo
+    servidor — daí este endpoint existir, em vez de o frontend apenas
+    "esquecer" um valor local.
+    """
+    response.delete_cookie(ACCESS_TOKEN_COOKIE, path="/")
+    response.delete_cookie(CSRF_TOKEN_COOKIE, path="/")
 
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

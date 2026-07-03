@@ -93,8 +93,14 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       target: runtime
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     container_name: incidentguard-frontend
     restart: unless-stopped
+    environment:
+      # Mesma origem usada no build (bundle JS) precisa ser liberada em
+      # runtime na CSP (connect-src) — ver frontend/nginx.conf.template.
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     ports:
       - "3000:80"
     networks:
@@ -103,7 +109,7 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80/health"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/health"]
       interval: 30s
       timeout: 5s
       retries: 3

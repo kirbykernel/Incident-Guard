@@ -29,12 +29,6 @@ class LoginRequest(BaseModel):
         return v
 
 
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    expires_in: int  # segundos
-
-
 # ----------------------------------------------------------
 # User
 # ----------------------------------------------------------

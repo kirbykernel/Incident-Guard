@@ -9,8 +9,9 @@
 | JWT token | S — Spoofing | Forjamento com secret fraco ou vazado |
 | JWT token | T — Tampering | Alteracao de payload sem reverificacao |
 | JWT token | R — Repudiation | Sem mecanismo de revogacao de tokens |
-| JWT token | I — Information Disclosure | Token armazenado em localStorage |
+| JWT token | I — Information Disclosure | Mitigado: cookie httpOnly (inacessivel a JavaScript, nao mais localStorage) |
 | JWT token | E — Elevation of Privilege | Elevacao de role diretamente no payload |
+| POST/PATCH /incidents | T — Tampering | CSRF (cookie de sessao enviado automaticamente pelo navegador) — mitigado via SameSite=Lax + CSRF token (double-submit cookie) |
 | POST /webhooks/* | S — Spoofing | Spoofing de fonte de alerta |
 | POST /webhooks/* | T — Tampering | Payload injection via campos nao sanitizados |
 | POST /webhooks/* | I — Information Disclosure | API Key exposta em logs ou respostas |

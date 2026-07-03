@@ -1,6 +1,13 @@
 # ============================================================
-# IncidentGuard — nginx.conf
+# IncidentGuard — nginx.conf.template
 # Headers de segurança aplicados por padrão.
+#
+# Template (não .conf direto): a CSP precisa liberar connect-src para a
+# origem real da API, que só é conhecida em runtime (varia entre dev,
+# k8s, etc). O entrypoint padrão da imagem nginx roda envsubst sobre
+# arquivos em /etc/nginx/templates/*.template automaticamente, usando
+# as variáveis de ambiente do container — por isso ${VITE_API_BASE_URL}
+# abaixo é resolvido antes do nginx iniciar, sem tooling extra.
 # ============================================================
 
 server {
@@ -18,7 +25,7 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ${VITE_API_BASE_URL};" always;
 
     # Health check endpoint (para Kubernetes)
     location /health {
