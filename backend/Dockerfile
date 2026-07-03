@@ -43,8 +43,11 @@ COPY --from=builder /install /usr/local
 RUN groupadd --gid 1001 appgroup && \
     useradd --uid 1001 --gid appgroup --no-create-home --shell /bin/false appuser
 
-# Copia código da aplicação
+# Copia código da aplicação, migrations e entrypoint
 COPY --chown=appuser:appgroup app/ ./app/
+COPY --chown=appuser:appgroup alembic.ini ./alembic.ini
+COPY --chown=appuser:appgroup migrations/ ./migrations/
+COPY --chown=appuser:appgroup --chmod=755 entrypoint.sh ./entrypoint.sh
 
 # Sem root a partir daqui
 USER appuser
@@ -56,5 +59,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
-# Inicia com uvicorn (sem reload em produção)
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Aplica migrations e inicia a API (ver entrypoint.sh)
+CMD ["./entrypoint.sh"]

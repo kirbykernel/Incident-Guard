@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from app.core.database import engine, Base
+from app.core.database import engine
 from app.core.settings import get_settings
 from app.routes import auth, incidents, webhooks
 
@@ -24,16 +24,14 @@ logger = logging.getLogger("incidentguard")
 
 
 # ----------------------------------------------------------
-# Lifecycle: cria tabelas na inicialização (dev)
-# Em produção, use Alembic migrations.
+# Lifecycle
+# O schema do banco é responsabilidade das migrations Alembic
+# (rodadas antes da app subir — ver entrypoint.sh), não da app.
 # ----------------------------------------------------------
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Iniciando IncidentGuard — ambiente: {settings.API_ENV}")
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Banco de dados pronto")
     yield
     logger.info("Encerrando IncidentGuard")
     await engine.dispose()
