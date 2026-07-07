@@ -13,6 +13,9 @@ htmlcov/
 #claude
 CLAUDE.md
 
+# Anotações de estudo locais (não fazem parte do portfólio)
+docs/study/
+
 # Node / React
 node_modules/
 dist/
