@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: incidentguard
+  labels:
+    app.kubernetes.io/name: backend
+    app.kubernetes.io/part-of: incidentguard
+data:
+  API_ENV: development
+  LOG_LEVEL: info
+  JWT_ALGORITHM: HS256
+  JWT_EXPIRE_MINUTES: "480"

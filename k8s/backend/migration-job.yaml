@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: backend-migrate
+  namespace: incidentguard
+  labels:
+    app.kubernetes.io/name: backend-migrate
+    app.kubernetes.io/part-of: incidentguard
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      name: migrate-job
+      namespace: incidentguard
+      labels:
+        app.kubernetes.io/name: backend-migrate
+        app.kubernetes.io/part-of: incidentguard
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: incidentguard-backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["alembic", "upgrade", "head"]
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef: { name: postgres-credentials, key: POSTGRES_USER }
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: postgres-credentials, key: POSTGRES_PASSWORD }
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef: { name: postgres-credentials, key: POSTGRES_DB }
+            - name: DATABASE_URL
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(POSTGRES_DB)"
+          envFrom:
+            - secretRef: 
+                name: backend-secrets
+            - configMapRef: 
+                name: backend-config
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { memory: 256Mi }
+
+            
+
