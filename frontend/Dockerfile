@@ -48,11 +48,11 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
 
 USER nginx
 
-EXPOSE 80
+EXPOSE 8080
 
 # 127.0.0.1 explícito: "localhost" resolve para ::1 antes de 127.0.0.1
-# neste musl/Alpine, e o nginx só escuta em 0.0.0.0:80 (IPv4).
+# neste musl/Alpine, e o nginx só escuta em 0.0.0.0:8080 (IPv4).
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD wget -qO- http://127.0.0.1:80/health || exit 1
+    CMD wget -qO- http://127.0.0.1:8080/health || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]

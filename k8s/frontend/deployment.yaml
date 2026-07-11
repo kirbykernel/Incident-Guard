@@ -20,26 +20,47 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: incidentguard-frontend:v2
+          image: incidentguard-frontend:v4
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8080
           env:
             - name: VITE_API_BASE_URL
               value: ""
           readinessProbe:
             httpGet:
               path: /health
-              port: 80
+              port: 8080
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /health
-              port: 80
+              port: 8080
             initialDelaySeconds: 15
             periodSeconds: 15
           resources:
             requests: { cpu: 50m, memory: 32Mi }
             limits: { cpu: 200m, memory: 64Mi }
+          securityContext:
+            allowPrivilegeEscalation: false #bloqueia sudo/setuid
+            readOnlyRootFilesystem: true # filesystem do container somente leitura
+            capabilities:
+              drop: ["ALL"] # zera privilégios de kernel
+          volumeMounts:
+              - name: nginx-cache
+                mountPath: /var/cache/nginx
+              - name: nginx-run
+                mountPath: /var/run
+      volumes:
+          - name: nginx-cache
+            emptyDir: {}
+          - name: nginx-run
+            emptyDir: {}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101 # UID criado na imagem do Nginx:Alpine
+        runAsGroup: 101 # GID criado na imagem do Nginx:Alpine
+        seccompProfile:
+          type: RuntimeDefault
