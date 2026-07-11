@@ -36,9 +36,6 @@ class Settings(BaseSettings):
     SECURITY_SCANNER_API_KEY: str
     FALCO_API_KEY: str
 
-    # --- CORS ---
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
-
     @field_validator("JWT_SECRET_KEY")
     @classmethod
     def jwt_secret_must_be_strong(cls, v: str) -> str:

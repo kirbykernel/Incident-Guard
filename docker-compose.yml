@@ -66,8 +66,6 @@ services:
       FALCO_API_KEY: ${FALCO_API_KEY}
       API_ENV: ${API_ENV:-development}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-    ports:
-      - "8000:8000"
     networks:
       - backend-net
       - frontend-net
@@ -94,13 +92,9 @@ services:
       dockerfile: Dockerfile
       target: runtime
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+        VITE_API_BASE_URL: ""
     container_name: incidentguard-frontend
     restart: unless-stopped
-    environment:
-      # Mesma origem usada no build (bundle JS) precisa ser liberada em
-      # runtime na CSP (connect-src) — ver frontend/nginx.conf.template.
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
     ports:
       - "3000:80"
     networks:

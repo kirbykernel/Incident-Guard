@@ -19,7 +19,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: migrate
-          image: incidentguard-backend:latest
+          image: incidentguard-backend:v2
           imagePullPolicy: IfNotPresent
           command: ["alembic", "upgrade", "head"]
           env:
