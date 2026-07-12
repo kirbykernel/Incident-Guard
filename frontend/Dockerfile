@@ -24,7 +24,7 @@ RUN npm run build
 
 
 # ---- Stage 2: runtime ----
-FROM nginx:1.26-alpine@sha256:b17b00f7ef0038aeb11362157f49006a130628ee711cefcced871405d046f114 AS runtime
+FROM nginx:1.31-alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa AS runtime
 
 LABEL org.opencontainers.image.title="IncidentGuard Frontend"
 LABEL org.opencontainers.image.description="Dashboard React do IncidentGuard"
