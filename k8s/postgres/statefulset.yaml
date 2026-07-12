@@ -43,9 +43,26 @@ spec:
           resources:
             requests: { cpu: 100m, memory: 128Mi }
             limits: { cpu: 500m, memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false #bloqueia sudo/setuid
+            readOnlyRootFilesystem: true # filesystem do container somente leitura
+            capabilities:
+              drop: ["ALL"] # zera privilégios de kernel
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+            - name: postgres-socket
+              mountPath: /var/run/postgresql
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70 # UID criado na imagem do postgres:16-Alpine (digest da imagem está pinado)
+        runAsGroup: 70 # GID criado na imagem do postgres:16-Alpine (digest da imagem está pinado)
+        fsGroup: 70
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: postgres-socket
+          emptyDir: {}
   volumeClaimTemplates:
     - metadata:
         name: postgres-data
