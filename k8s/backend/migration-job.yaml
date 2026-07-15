@@ -17,6 +17,13 @@ spec:
         app.kubernetes.io/part-of: incidentguard
     spec:
       restartPolicy: OnFailure
+      initContainers:
+          - name: wait-postgres
+            image: incidentguard-backend:v2      # reusa a imagem já presente — sem nova dependência externa
+            command: ["sh", "-c", "until python -c 'import socket; socket.create_connection((\"postgres\", 5432), timeout=2)' 2>/dev/null; do echo 'aguardando postgres...'; sleep 2; done"]
+            resources:
+              requests: { cpu: 50m, memory: 32Mi }
+              limits: { memory: 64Mi }
       containers:
         - name: migrate
           image: incidentguard-backend:v2
