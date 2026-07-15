@@ -1,0 +1,10 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: incidentguard
+  labels:
+    app.kubernetes.io/part-of: incidentguard
+spec:
+  podSelector: {}      # politica aplicada a todos os Pods
+  policyTypes: ["Ingress"]

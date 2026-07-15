@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: backend-allow-ingress
+  namespace: incidentguard
+  labels:
+    app.kubernetes.io/part-of: incidentguard
+spec:
+  podSelector:
+    matchLabels:
+       app.kubernetes.io/name: backend-pod      # a quem esta política se aplica
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+      - namespaceSelector:
+         matchLabels:                # namespace do ingress NGINX - quem chama o backend
+          kubernetes.io/metadata.name: ingress-nginx
+      ports:
+      - protocol: TCP
+        port: 8000

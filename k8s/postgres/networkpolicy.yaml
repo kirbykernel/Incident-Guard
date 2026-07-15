@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-allow-backend
+  namespace: incidentguard
+  labels:
+    app.kubernetes.io/part-of: incidentguard
+spec:
+  podSelector:
+    matchLabels:
+       app.kubernetes.io/name: postgres      # a quem esta política se aplica
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+      - podSelector:
+         matchExpressions:                # backend E o Job de migration — ambos falam com o banco
+          - key: app.kubernetes.io/name
+            operator: In
+            values: ["backend-pod", "backend-migrate"]
+      ports:
+      - protocol: TCP
+        port: 5432
