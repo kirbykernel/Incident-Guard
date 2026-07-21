@@ -16,6 +16,7 @@ spec:
         app.kubernetes.io/name: backend-migrate
         app.kubernetes.io/part-of: incidentguard
     spec:
+      serviceAccountName: backend-migrate
       restartPolicy: OnFailure
       initContainers:
           - name: wait-postgres

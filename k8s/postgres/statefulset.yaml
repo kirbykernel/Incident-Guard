@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/name: postgres
         app.kubernetes.io/part-of: incidentguard
     spec:
+      serviceAccountName: postgres
       containers:
         - image: postgres:16-alpine@sha256:0fc5c901ec0a3c55ce70b99b040daeb89d5b35b61febbced1b4b24dbc3153ec8
           name: postgres

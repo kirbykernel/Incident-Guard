@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/name: frontend-pod
         app.kubernetes.io/part-of: incidentguard
     spec:
+      serviceAccountName: frontend
       containers:
         - name: frontend
           image: incidentguard-frontend:v4
