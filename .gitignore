@@ -12,6 +12,7 @@ dist/
 htmlcov/
 #claude
 CLAUDE.md
+.claude/settings.local.json
 
 # Anotações de estudo locais (não fazem parte do portfólio)
 docs/study/
