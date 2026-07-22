@@ -5,6 +5,9 @@ kubectl create secret generic postgres-credentials --namespace incidentguard \
  --from-literal=POSTGRES_USER=incidentguard \
  --from-literal=POSTGRES_DB=incidentguard \
  --from-literal=POSTGRES_PASSWORD="$(openssl rand -base64 24)"
+kubectl create secret generic app-db-credentials --namespace incidentguard \
+ --from-literal=APP_DB_USER=incidentguard_app \
+ --from-literal=APP_DB_PASSWORD="$(openssl rand -base64 24)"
 kubectl create secret generic backend-secrets --namespace incidentguard \
  --from-literal=JWT_SECRET_KEY="$(openssl rand -hex 32)" \
  --from-literal=ALERTMANAGER_API_KEY="$(openssl rand -hex 24)" \
