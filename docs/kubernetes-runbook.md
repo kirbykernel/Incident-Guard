@@ -89,8 +89,7 @@ kubectl apply -f k8s/namespace.yaml
 ```
 
 Creates `postgres-credentials`, `app-db-credentials`, and `backend-secrets` with
-freshly generated random values. **Secrets are never committed** — the script
-generates them; no human ever reads or types the passwords.
+freshly generated random values.
 
 ## 7. Deploy PostgreSQL
 
