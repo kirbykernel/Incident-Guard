@@ -126,15 +126,4 @@ alongside.
 
 ---
 
-## Roadmap
 
-- [x] Threat model, DFD, attack-surface map
-- [x] Backend API, migrations, React dashboard
-- [x] Container hardening, digest pinning
-- [x] Kubernetes deployment with SecurityContexts, NetworkPolicies, RBAC
-- [x] Least-privilege database role
-- [x] OPA/Gatekeeper admission policies
-- [ ] CI pipeline with security gates (Bandit, Semgrep, pip-audit, Gitleaks, Trivy, Checkov)
-- [ ] Terraform for cluster resources
-- [ ] Automated backups (`pg_dump` CronJob)
-- [ ] Falco runtime security integration
