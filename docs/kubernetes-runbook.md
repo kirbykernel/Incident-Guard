@@ -2,8 +2,7 @@
 
 Full deployment sequence for a local minikube cluster, from an empty machine to a
 working, hardened deployment. This doubles as the **disaster-recovery procedure**:
-every step below is reproducible from this repository, except the credentials,
-which are generated fresh (never committed).
+every step below is reproducible from this repository, except the credentials.
 
 ---
 
