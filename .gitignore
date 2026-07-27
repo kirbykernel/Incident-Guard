@@ -43,3 +43,6 @@ dist/
 *.key
 *.p12
 secrets/
+
+# kub test deploy
+bad-deploy.yaml

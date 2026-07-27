@@ -1,0 +1,29 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequirenonroot
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireNonRoot
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequirenonroot
+
+        pod_nonroot{
+        input.review.object.spec.template.spec.securityContext.runAsNonRoot
+        }
+        all_containers[c] {
+        c := input.review.object.spec.template.spec.containers[_]        
+        } 
+        all_containers[c] {
+        c := input.review.object.spec.template.spec.initContainers[_]
+        }
+        violation[{"msg": msg}] {
+          not pod_nonroot
+          container :=  all_containers[_]
+          not container.securityContext.runAsNonRoot
+          msg := sprintf("container <%v> does not declare non-root. Please check the Pod/Container manifest and configure securityContext.runAsNonRoot=true", [container.name])
+        }

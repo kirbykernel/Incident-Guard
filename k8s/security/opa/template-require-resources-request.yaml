@@ -1,0 +1,29 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8srequireresourcesrequests
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sRequireResourcesRequests
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8srequireresourcesrequests
+        all_containers [c] {
+          c := input.review.object.spec.template.spec.containers[_]
+        }
+        all_containers [c] {
+          c := input.review.object.spec.template.spec.initContainers[_]
+        }
+        violation[{"msg": msg}] {
+          container := all_containers[_]
+          not container.resources.requests.memory
+          msg := sprintf("container <%v> does not have Memory request declared. Please, check its respective manifest.", [container.name])
+        }
+        violation[{"msg": msg}] {
+          container := all_containers[_]
+          not container.resources.requests.cpu
+          msg := sprintf("container <%v> does not have CPU request declared. Please, check its respective manifest.", [container.name])
+        }
