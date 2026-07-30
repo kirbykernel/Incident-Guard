@@ -1,0 +1,116 @@
+name: security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: secrets (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # required — the default shallow clone hides history
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # SAST 
+  # Rulesets are declared explicitly, one per language present in the
+  # repo. A missing ruleset is a silent coverage gap: Semgrep would scan
+  # nothing for that language and still exit 0.
+  semgrep:
+    name: sast (semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep:1.140.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scan
+        run: |
+          semgrep scan \
+            --config=p/security-audit \
+            --config=p/python \
+            --config=p/typescript \
+            --config=p/react \
+            --config=p/dockerfile \
+            --error
+      # --error makes Semgrep exit non-zero on findings. Without it the
+      # scan reports problems and still passes the gate.
+
+  # SCA 
+  pip-audit:
+    name: sca (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install pip-audit
+      - run: pip-audit -r backend/requirements.txt
+
+  # SCA 
+  npm-audit:
+    name: sca (npm-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Audit
+        working-directory: frontend
+        run: npm audit --audit-level=high
+      # --audit-level=high sets the gating threshold. Without it the job
+      # fails on low-severity dev-dependency advisories and gets deleted
+      # by whoever is on call that week.
+
+  # Container image scanning
+  # Runs once per image via a matrix. fail-fast: false so a finding in
+  # one image doesn't cancel the other — during triage you want the full
+  # picture, not the first failure.
+  trivy:
+    name: image (trivy)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: |
+          docker build \
+            --build-arg VITE_API_BASE_URL="" \
+            -t scan-target:ci ./${{ matrix.component }}
+      - name: Scan image
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: scan-target:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true    # don't block on CVEs with no available patch
+          exit-code: '1'
+
+  # IaC / manifest scanning 
+  # Overlaps deliberately with the Gatekeeper admission policies: Checkov
+  # catches misconfiguration at PR time (fast feedback, bypassable),
+  # Gatekeeper catches it at admission (unbypassable, but later).
+  checkov:
+    name: iac (checkov)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: k8s/
+          framework: kubernetes
+          soft_fail: true
