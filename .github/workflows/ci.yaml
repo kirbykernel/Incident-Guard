@@ -9,13 +9,13 @@ jobs:
   backend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build Backend image
         run: docker build -t incidentguard-backend:ci ./backend
   
   frontend:
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v7
         - name: Build Frontend image
           run: docker build --build-arg VITE_API_URL="" -t frontend:ci ./frontend
