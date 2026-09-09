@@ -31,8 +31,15 @@ LABEL org.opencontainers.image.source="https://github.com/seu-usuario/incidentgu
 
 WORKDIR /app
 
-# Instala apenas dependências de runtime do sistema
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Instala dependências de runtime do sistema e aplica patches de segurança.
+# A base é fixada por digest (reprodutibilidade), mas fica defasada entre
+# releases: o Trivy aponta CVEs de pacotes do SO já corrigidos nos
+# repositórios do Debian, mas ainda não incorporados à imagem publicada.
+# O upgrade fecha essa janela sem abrir mão do pin.
+# Contrapartida: o mesmo digest pode gerar imagens diferentes ao longo do
+# tempo — ver docs/security-scanning.md.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 

@@ -29,6 +29,15 @@ FROM nginx:stable-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417
 LABEL org.opencontainers.image.title="IncidentGuard Frontend"
 LABEL org.opencontainers.image.description="Dashboard React do IncidentGuard"
 
+# Aplica patches de segurança do Alpine sobre a imagem base.
+# A base é fixada por digest (reprodutibilidade), mas fica defasada entre
+# releases: o Trivy apontava CVEs de pacotes do SO já corrigidos nos
+# repositórios do Alpine, mas ainda não incorporados à imagem publicada.
+# Esta linha fecha essa janela sem abrir mão do pin.
+# Contrapartida: o mesmo digest pode gerar imagens diferentes ao longo do
+# tempo — ver docs/security-scanning.md.
+RUN apk upgrade --no-cache
+
 # Remove configuração padrão do nginx
 RUN rm /etc/nginx/conf.d/default.conf
 

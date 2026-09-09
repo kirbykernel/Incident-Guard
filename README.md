@@ -67,6 +67,23 @@ time — what was configured by hand becomes a control the cluster enforces:
 Policies were rolled out in `dryrun` first, audited against the running cluster,
 remediated, and only then promoted to `deny`.
 
+### CI security gates
+Every pull request runs [six security jobs](.github/workflows/security.yml) in
+parallel, each blocking the merge:
+
+| Category | Tool | Covers |
+|---|---|---|
+| Secret scanning | Gitleaks | full git history |
+| SAST | Semgrep | Python, TypeScript, React, Dockerfiles |
+| SCA | pip-audit · npm audit | Python and JavaScript dependencies |
+| Container scanning | Trivy | OS packages in both images |
+| IaC | Checkov | Kubernetes manifests (advisory) |
+
+Findings are triaged by **reachability** before remediation — a vulnerable
+package that the architecture never invokes is a different risk from one in the
+request path. See [`docs/security-scanning.md`](docs/security-scanning.md) for the
+threshold decisions, the base-image patching strategy, and worked triage examples.
+
 ---
 
 ## Architecture
