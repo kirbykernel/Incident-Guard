@@ -6,7 +6,7 @@
 # ============================================================
 
 # ---- Stage 1: builder ----
-FROM python:3.12-slim@sha256:86d3e4424d5e963e60594a3a6b4d597cc4d41f5152fe67a97a40dca9ea092475 AS builder
+FROM python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea AS builder
 
 WORKDIR /build
 
@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
 # ---- Stage 2: runtime ----
-FROM python:3.12-slim@sha256:86d3e4424d5e963e60594a3a6b4d597cc4d41f5152fe67a97a40dca9ea092475 AS runtime
+FROM python:3.12-slim@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea AS runtime
 
 # Metadados da imagem
 LABEL org.opencontainers.image.title="IncidentGuard API"
@@ -31,8 +31,15 @@ LABEL org.opencontainers.image.source="https://github.com/seu-usuario/incidentgu
 
 WORKDIR /app
 
-# Instala apenas dependências de runtime do sistema
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Instala dependências de runtime do sistema e aplica patches de segurança.
+# A base é fixada por digest (reprodutibilidade), mas fica defasada entre
+# releases: o Trivy aponta CVEs de pacotes do SO já corrigidos nos
+# repositórios do Debian, mas ainda não incorporados à imagem publicada.
+# O upgrade fecha essa janela sem abrir mão do pin.
+# Contrapartida: o mesmo digest pode gerar imagens diferentes ao longo do
+# tempo — ver docs/security-scanning.md.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends \
     libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
