@@ -93,7 +93,7 @@ jobs:
             --build-arg VITE_API_BASE_URL="" \
             -t scan-target:ci ./${{ matrix.component }}
       - name: Scan image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: scan-target:ci
           severity: CRITICAL,HIGH
